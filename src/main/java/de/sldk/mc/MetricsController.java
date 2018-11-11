@@ -1,7 +1,8 @@
 package de.sldk.mc;
 
+import de.sldk.mc.metrics.MinecraftGauge;
+import de.sldk.mc.metrics.MinecraftMetrics;
 import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.Gauge;
 import io.prometheus.client.exporter.common.TextFormat;
 import org.bukkit.*;
 import org.bukkit.entity.EntityType;
@@ -16,7 +17,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
-import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.stream.Collectors;
@@ -26,20 +26,34 @@ public class MetricsController extends AbstractHandler {
     private final PrometheusExporter exporter;
     private final boolean individualPlayerMetrics;
 
-    private Gauge players = Gauge.build().name("mc_players_total").help("Online and offline players").labelNames("state").create().register();
-    private Gauge loadedChunks = Gauge.build().name("mc_loaded_chunks_total").help("Chunks loaded per world").labelNames("world").create().register();
-    private Gauge playersOnline = Gauge.build().name("mc_players_online_total").help("Players currently online per world").labelNames("world").create().register();
-    private Gauge entities = Gauge.build().name("mc_entities_total").help("Entities loaded per world").labelNames("world").create().register();
-    private Gauge livingEntities = Gauge.build().name("mc_living_entities_total").help("Living entities loaded per world").labelNames("world").create().register();
-    private Gauge memory = Gauge.build().name("mc_jvm_memory").help("JVM memory usage").labelNames("type").create().register();
-    private Gauge tps = Gauge.build().name("mc_tps").help("Server TPS (ticks per second)").create().register();
+    private final MinecraftGauge players;
+    private final MinecraftGauge loadedChunks;
+    private final MinecraftGauge playersOnline;
+    private final MinecraftGauge entities;
+    private final MinecraftGauge livingEntities;
+    private final MinecraftGauge memory;
+    private final MinecraftGauge tps;
 
-    private Gauge playerStats = Gauge.build().name("mc_player_statistic").help("Player statistics").labelNames("player_name", "statistic").create().register();
-    private Gauge playersWithNames = Gauge.build().name("mc_player_online").help("Online state by player name").labelNames("name").create().register();
+    private final MinecraftGauge playerStats;
+    private final MinecraftGauge playersWithNames;
 
     public MetricsController(PrometheusExporter exporter, boolean individualPlayerMetrics) {
         this.exporter = exporter;
         this.individualPlayerMetrics = individualPlayerMetrics;
+
+        MinecraftMetrics minecraftMetrics =
+                MinecraftMetrics.forServer(exporter.getServer().getServerName(), exporter.getServer().getServerId());
+
+        players = minecraftMetrics.getGauge("mc_players_total", "Online and offline players", "state");
+        loadedChunks = minecraftMetrics.getGauge("mc_loaded_chunks_total", "Chunks loaded per world", "world");
+        playersOnline = minecraftMetrics.getGauge("mc_players_online_total", "Players currently online per world", "world");
+        entities = minecraftMetrics.getGauge("mc_entities_total", "Entities loaded per world", "world");
+        livingEntities = minecraftMetrics.getGauge("mc_living_entities_total", "Living entities loaded per world", "world");
+        memory = minecraftMetrics.getGauge("mc_jvm_memory", "JVM memory usage", "type");
+        tps = minecraftMetrics.getGauge("mc_tps", "Server TPS (ticks per second)");
+
+        playerStats = minecraftMetrics.getGauge("mc_player_statistic", "Player statistics", "player_name", "statistic");
+        playersWithNames = minecraftMetrics.getGauge("mc_player_online", "Online state by player name", "name");
     }
 
     @Override
@@ -93,7 +107,7 @@ public class MetricsController extends AbstractHandler {
         }
     }
 
-    private void addIndividualPlayerMetrics(Gauge playerStats, Gauge playersWithNames) {
+    private void addIndividualPlayerMetrics(MinecraftGauge playerStats, MinecraftGauge playersWithNames) {
         try {
             for (OfflinePlayer player : Bukkit.getOfflinePlayers()) {
                 Map<String, Integer> statistics = getStatistics(player.getPlayer());

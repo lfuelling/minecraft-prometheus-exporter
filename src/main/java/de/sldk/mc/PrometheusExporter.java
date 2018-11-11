@@ -7,7 +7,7 @@ import org.eclipse.jetty.server.Server;
 
 public class PrometheusExporter extends JavaPlugin {
 
-    FileConfiguration config = getConfig();
+    private FileConfiguration config = getConfig();
     private Server server;
     private TpsPoller tpsPoller;
 
