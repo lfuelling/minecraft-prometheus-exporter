@@ -8,11 +8,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased] - 2018-11-xx
 ### Added
 - This changelog
+- Add labels `server_name` and `server_id` to all metrics
 
 ## [v1.2.0] - 2018-11-05
 ### Added
 - Experimental player statistics
-
 
 ## [v1.1.0] - 2017-03-18
 ### Added
@@ -27,7 +27,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [v1.0.0] - 2017-02-14
 ### Added 
 - Export JVM memory usage
-
 
 ## v0.1.0 - 2017-02-09
 ### Added
